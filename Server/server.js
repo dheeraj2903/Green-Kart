@@ -15,8 +15,8 @@ import { stripeWebhooks } from './controllers/orderController.js'
 const app = express()
 const port = process.env.PORT || 4000
 
-await connectDB()
-await connectCloudinary()
+connectDB()
+connectCloudinary()
 
 //allow multiple origins
 const allowedOrigins = ['http://localhost:5173', 'https://green-kart-nine.vercel.app','https://green-kart-zjgt.vercel.app']

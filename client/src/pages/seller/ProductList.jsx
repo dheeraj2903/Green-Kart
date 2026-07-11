@@ -3,7 +3,7 @@ import { useAppContext } from '../../context/AppContext'
 import toast from 'react-hot-toast'
 
 const ProductList = () => {
-  const {products, currency, axios, fetchProducts } = useAppContext()
+  const { products, currency, axios, fetchProducts } = useAppContext()
 
   const toggleStock = async (id, inStock)=> {
     try {

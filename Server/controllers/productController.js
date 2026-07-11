@@ -1,5 +1,27 @@
 import { v2 as cloudinary} from "cloudinary"
 import Product from '../models/Product.js'
+import { Readable } from 'stream';
+
+// Cloudinary buffer stream helper function
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    // upload_stream direct buffer data accept karta hai
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "products",
+        quality: "auto:good",
+        fetch_format: "auto"  
+      },
+      (error, result) => {
+        if (result) resolve(result.secure_url);
+        else reject(error);
+      }
+    );
+
+    // Buffer ko stream mein convert karke cloudinary ko pipe kar rahe hai
+    Readable.from(fileBuffer).pipe(stream);
+  });
+};
 
 // Add product : /api/product/add
 export const addProduct = async (req, res)=>{
@@ -8,12 +30,12 @@ export const addProduct = async (req, res)=>{
 
         const images = req.files
 
-        let imagesUrl = await Promise.all(
-            images.map(async (item)=>{
-                let result =  await cloudinary.uploader.upload(item.path,{resource_type: 'image'});
-                return result.secure_url
-            })
-        )
+        if(!images || images.length === 0 ) {
+            return res.json({ success: false, message: 'Please upload at least one image'})
+        }
+
+        const uploadPromises = images.map(item => uploadToCloudinary(item.buffer));
+        let imagesUrl = await Promise.all(uploadPromises)
 
         await Product.create({...productData, image: imagesUrl})
         res.json({ success: true, message: 'Product Added' })
@@ -39,7 +61,7 @@ export const productList = async (req, res)=>{
 export const productById = async (req, res)=>{
     try {
         const { id } = req.body
-        const products = await Product.findById({id})
+        const products = await Product.findById(id)
         res.json({success: true, products})
     } catch (error) {
         console.log(error.message)
